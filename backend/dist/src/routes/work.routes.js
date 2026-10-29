@@ -1,0 +1,17 @@
+import { Router } from "express";
+import * as work from "../controllers/work.controller.js";
+import * as productivity from "../controllers/productivity.controller.js";
+export const workRouter = Router();
+workRouter.route("/deals").get(work.listDeals).post(work.createDeal);
+workRouter.get("/deals/:id", work.getDeal);
+workRouter.route("/invoices").get(work.listInvoices).post(work.createInvoice);
+workRouter.route("/docs").get(work.listDocs).post(work.createDoc);
+workRouter.get("/docs/mentions", work.docMentions);
+workRouter.route("/docs/:id").get(work.getDoc).patch(work.updateDoc).delete(work.deleteDoc);
+workRouter.get("/clients", work.clients);
+workRouter.route("/today").get(work.today).post(work.createTask);
+workRouter.patch("/today/tasks/:id", work.updateTask);
+workRouter.route("/goals").get(productivity.getGoals).put(productivity.putGoals);
+workRouter.route("/focus").get(productivity.focus).post(productivity.focus);
+workRouter.get("/review", productivity.weeklyReview);
+workRouter.post("/invoices/:id/paid", productivity.patchInvoicePaid);

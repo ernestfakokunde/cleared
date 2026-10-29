@@ -1,0 +1,3 @@
+import Link from "next/link";
+import { Logo } from "@/components/logo";
+export default function PricingPage() { return <main className="public-page"><nav className="public-nav"><Link href="/"><Logo /></Link><Link href="/signup" className="button">Start free</Link></nav><section className="auth-wrap" style={{ minHeight: "65vh" }}><div className="auth-card"><div className="eyebrow">Simple pricing</div><h1>Free while we build.</h1><p>Track your deals, send invoices, and see what is owed. Paid plans will come later.</p><Link className="button" href="/signup">Start free</Link></div></section><footer className="public-footer">© 2026 Cleared</footer></main>; }

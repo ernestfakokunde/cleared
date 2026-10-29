@@ -1,0 +1,12 @@
+import { Router } from "express";
+import { askCleared, draftDoc, draftMessage, extractDeal, orderPriorities, summarizeContract, suggestReviewPriorities } from "../controllers/ai.controller.js";
+
+export const aiRouter = Router();
+aiRouter.post("/draft-message", draftMessage);
+aiRouter.post("/contract-summary", summarizeContract);
+aiRouter.post("/ask", askCleared);
+aiRouter.post("/doc-draft", draftDoc);
+export const aiUtilityRouter = Router();
+aiUtilityRouter.post("/today/order", orderPriorities);
+aiUtilityRouter.post("/deals/extract", extractDeal);
+aiUtilityRouter.post("/review/priorities", suggestReviewPriorities);

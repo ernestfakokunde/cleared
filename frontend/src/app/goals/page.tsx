@@ -1,0 +1,18 @@
+"use client";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { AppShell } from "../app-shell";
+import { Card } from "@/components/ui";
+
+type Goal = { type: string; target: number; current: number; currency: string };
+const labels: Record<string, string> = { monthly_income: "Monthly income", on_time_deliverables: "Deliverables on time", weekly_pitches: "Pitches this week" };
+export default function GoalsPage() {
+  const [goals, setGoals] = useState<Goal[]>([]); const [streak, setStreak] = useState(0); const [paidCents, setPaidCents] = useState(0); const [forecastCents, setForecastCents] = useState(0); const [message, setMessage] = useState(""); const [busy, setBusy] = useState(false);
+  useEffect(() => { fetch("/api/goals").then(r => r.json()).then(d => { if (d.goals) setGoals(d.goals); if (d.stats) { setStreak(d.stats.onTimeStreak); setPaidCents(d.stats.monthlyPaidCents ?? 0); setForecastCents(d.stats.monthlyForecastCents ?? 0); } else setMessage(d.error ?? "Sign in to view your live goal progress."); }).catch(() => setMessage("Couldn't load goals.")); }, []);
+  const update = (type: string, target: number) => setGoals(current => current.map(g => g.type === type ? { ...g, target } : g));
+  async function save() { setBusy(true); setMessage(""); const r = await fetch("/api/goals", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ goals: goals.map(g => ({ type: g.type, target: g.target, currency: g.currency })) }) }); const d = await r.json(); setMessage(r.ok ? "Goals saved." : d.error); setBusy(false); }
+  const money = (cents: number, currency: string) => new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: 0 }).format(cents / 100);
+  return <AppShell><div className="page-heading"><div><div className="eyebrow">Progress with purpose</div><h1 className="page-title">Goals</h1><p className="subtle">A few useful targets connected to your work and income.</p></div><Link className="button secondary" href="/review">Weekly review</Link></div>
+    <div className="goal-grid">{goals.map(g => { const income = g.type === "monthly_income"; const currentText = income ? money(g.current, g.currency) : g.type === "on_time_deliverables" ? `${g.current}%` : `${g.current}`; const targetText = income ? money(g.target, g.currency) : g.type === "on_time_deliverables" ? `${g.target}%` : `${g.target}`; const pct = Math.min(100, Math.round(g.current / Math.max(1, g.target) * 100)); return <Card key={g.type} className="goal-card"><div className="eyebrow">{labels[g.type]}</div><div className="goal-numbers"><strong>{currentText}</strong><span>of {targetText}</span></div>{income && <p className="goal-forecast">Paid {money(paidCents, g.currency)} · {money(forecastCents, g.currency)} forecast from sent invoices due this month</p>}<div className="goal-track"><span style={{ width: `${pct}%` }} /></div><div className="goal-bottom"><span>{pct}% of goal</span><label>Target <input className="input goal-input" type="number" min="1" value={income ? Math.round(g.target / 100) : g.target} onChange={e => update(g.type, Number(e.target.value) * (income ? 100 : 1))} />{income && <small>/mo</small>}</label></div></Card>; })}</div>
+    <Card className="streak-card"><div><div className="eyebrow">On-time delivery streak</div><strong className="stat-value">{streak} deliverables</strong><p className="subtle">Completed on or before their due date.</p></div><button className="button" disabled={!goals.length || busy} onClick={save}>{busy ? "Saving…" : "Save goals"}</button></Card>{message && <p className="subtle" role="status">{message}</p>}</AppShell>;
+}

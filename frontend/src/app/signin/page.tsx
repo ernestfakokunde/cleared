@@ -1,0 +1,4 @@
+import Link from "next/link";
+import { Logo } from "@/components/logo";
+import { emailSignIn, googleSignIn } from "../auth-actions";
+export default function SignInPage() { return <main className="auth-wrap"><section className="auth-card"><Link href="/"><Logo /></Link><h1>Welcome back.</h1><p>Sign in to see where your work stands.</p><form action={emailSignIn}><label className="field-label">Email address<input className="input" name="email" type="email" required placeholder="you@example.com" /></label><button className="button">Send me a sign-in link</button></form><form action={googleSignIn}><button className="button secondary" style={{ width: "100%", marginTop: 10 }}>Continue with Google</button></form><div className="auth-note">New to Cleared? <Link href="/signup">Create an account</Link></div></section></main>; }

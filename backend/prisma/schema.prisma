@@ -1,0 +1,265 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  emailVerified DateTime?
+  image         String?
+  name          String?
+  createdAt     DateTime   @default(now())
+  profile       Profile?
+  accounts      Account[]
+  sessions      Session[]
+  clients       Client[]
+  deals         Deal[]
+  invoices      Invoice[]
+  reminders     Reminder[]
+  activities    Activity[]
+  tasks         Task[]
+  goals         Goal[]
+  focusSessions FocusSession[]
+  docs          Doc[]
+  aiUsage       AiUsage[]
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([sessionToken])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Profile {
+  userId              String  @id
+  businessName        String?
+  country             String?
+  role                String  @default("creator")
+  defaultCurrency     String  @default("USD")
+  defaultTermsDays    Int     @default(30)
+  invoicePrefix       String  @default("CL-")
+  paymentInstructions String?
+  logoUrl             String?
+  reminderTemplates   Json?
+  user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Client {
+  id           String    @id @default(cuid())
+  userId       String
+  name         String
+  contactName  String?
+  contactEmail String?
+  deletedAt    DateTime?
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deals        Deal[]
+  invoices     Invoice[]
+  docs         Doc[]
+
+  @@index([userId])
+}
+
+model Deal {
+  id                   String        @id @default(cuid())
+  userId               String
+  clientId             String?
+  title                String
+  amountCents          Int
+  currency             String        @default("USD")
+  stage                String        @default("Pitched")
+  termsDays            Int           @default(30)
+  usageRightsText      String?
+  usageRightsExpiresOn DateTime?
+  notes                String?
+  contractFileUrl      String?
+  source               String        @default("manual")
+  createdAt            DateTime      @default(now())
+  deletedAt            DateTime?
+  user                 User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client               Client?       @relation(fields: [clientId], references: [id])
+  deliverables         Deliverable[]
+  invoices             Invoice[]
+  activities           Activity[]
+  tasks                Task[]
+  focusSessions        FocusSession[]
+  docs                 Doc[]
+
+  @@index([userId, deletedAt])
+}
+
+model Deliverable {
+  id     String    @id @default(cuid())
+  dealId String
+  title  String
+  dueOn  DateTime?
+  doneAt DateTime?
+  deal   Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id                          String        @id @default(cuid())
+  userId                      String
+  dealId                      String?
+  clientId                    String?
+  number                      String
+  issueDate                   DateTime
+  dueDate                     DateTime
+  currency                    String        @default("USD")
+  totalCents                  Int
+  status                      String        @default("Draft")
+  paymentInstructionsSnapshot String?
+  sentAt                      DateTime?
+  paidAt                      DateTime?
+  paidAmountCents             Int?
+  remindersEnabled            Boolean       @default(true)
+  publicToken                 String        @unique @default(cuid())
+  deletedAt                   DateTime?
+  user                        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deal                        Deal?         @relation(fields: [dealId], references: [id])
+  client                      Client?       @relation(fields: [clientId], references: [id])
+  items                       InvoiceItem[]
+  reminders                   Reminder[]
+  activities                  Activity[]
+
+  @@index([userId, deletedAt])
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Float   @default(1)
+  unitCents   Int
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model Reminder {
+  id           String    @id @default(cuid())
+  userId       String
+  invoiceId    String
+  kind         String
+  scheduledFor DateTime
+  sentAt       DateTime?
+  status       String    @default("scheduled")
+  invoice      Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([scheduledFor, status])
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  userId    String
+  dealId    String?
+  invoiceId String?
+  type      String
+  message   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deal      Deal?    @relation(fields: [dealId], references: [id])
+  invoice   Invoice? @relation(fields: [invoiceId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  userId      String
+  dealId      String?
+  title       String
+  dueOn       DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deal        Deal?     @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  @@index([userId, completedAt, dueOn])
+  @@index([dealId])
+}
+
+model Goal {
+  id          String   @id @default(cuid())
+  userId      String
+  type        String
+  target      Int
+  currency    String   @default("USD")
+  periodStart DateTime
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, type, periodStart])
+  @@index([userId, periodStart])
+}
+
+model FocusSession {
+  id            String   @id @default(cuid())
+  userId        String
+  dealId        String
+  deliverableId String?
+  startedAt     DateTime @default(now())
+  endedAt       DateTime?
+  durationSecs  Int?
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deal          Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  @@index([userId, startedAt])
+  @@index([dealId, endedAt])
+}
+
+model Doc {
+  id        String   @id @default(cuid())
+  userId    String
+  dealId    String?
+  clientId  String?
+  title     String   @default("Untitled")
+  content   Json
+  template  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deal      Deal?    @relation(fields: [dealId], references: [id], onDelete: SetNull)
+  client    Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  @@index([userId, updatedAt])
+  @@index([dealId])
+  @@index([clientId])
+}
+
+model AiUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  feature   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, createdAt])
+}
