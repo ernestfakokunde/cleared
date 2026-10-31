@@ -10,18 +10,18 @@
       "page": "/",
       "matchers": [
         {
-          "regexp": "^/.*$",
-          "originalSource": "/:path*"
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!_next\\/static|_next\\/image|favicon.ico|favicon.svg|apple-touch-icon.svg).*))(.json)?[\\/#\\?]?$",
+          "originalSource": "/((?!_next/static|_next/image|favicon.ico|favicon.svg|apple-touch-icon.svg).*)"
         }
       ],
       "wasm": [],
       "assets": [],
       "env": {
-        "__NEXT_BUILD_ID": "80C_sX1FNG73k3OQUy_h7",
-        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "MYBRE13tHKnw+tkQfreOZyUBEfbBOxEWS9iy9nBdSPI=",
-        "__NEXT_PREVIEW_MODE_ID": "a86c31399376165cecda17ab270c057f",
-        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "552d65f3e3ca00b95e646d6dd5f618c576cae341205b9f2eefebacdf16afa5d9",
-        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "ab2da9b68891ee80ee76abc7c746051cc4edd9d45bc64e3664b5d92d896f638b"
+        "__NEXT_BUILD_ID": "RRWGfqIs2qIMeP8ZLAkv6",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "cW1nuCBHJ2nPMGF2XNexzmgzqNav/TkUDXvglMhKECs=",
+        "__NEXT_PREVIEW_MODE_ID": "22368125f090a08ce9494758709d7a48",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "3691d5a708fbbe4dd154dcce045b616a549ee197b3c59fcb0763d84a13bac0bb",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "19b263c340e8e663d373723e8e501cba1e1f03976941b63f701e1e8ff815a827"
       }
     }
   },

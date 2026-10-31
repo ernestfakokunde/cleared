@@ -4,7 +4,9 @@ import { resolve } from "node:path";
 import { z } from "zod";
 
 const cwd = process.cwd();
-const envPath = existsSync(resolve(cwd, "backend/prisma/schema.prisma")) ? resolve(cwd, ".env") : resolve(cwd, "../.env");
+const repoRoot = existsSync(resolve(cwd, "backend/prisma/schema.prisma")) ? cwd : resolve(cwd, "..");
+const rootEnv = resolve(repoRoot, ".env");
+const envPath = existsSync(rootEnv) ? rootEnv : resolve(repoRoot, "backend/.env");
 dotenv.config({ path: envPath });
 
 const envSchema = z.object({

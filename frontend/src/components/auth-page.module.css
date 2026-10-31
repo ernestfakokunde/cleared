@@ -1,0 +1,86 @@
+.page {
+  min-height: 100vh;
+  padding: clamp(16px, 3vw, 42px);
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(ellipse at 8% 8%, rgba(61, 220, 151, .13), transparent 35%),
+    #f4f3ef;
+}
+
+.layout {
+  width: min(1100px, 100%);
+  min-height: min(690px, calc(100vh - 32px));
+  display: grid;
+  grid-template-columns: 1.02fr .98fr;
+  overflow: hidden;
+  border: 1px solid #e4e2dc;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 28px 80px rgba(23, 31, 27, .09);
+}
+
+.brandPanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(28px, 4vw, 54px);
+  color: #f7f8f6;
+  background:
+    radial-gradient(ellipse at 88% 13%, rgba(61, 220, 151, .23), transparent 34%),
+    linear-gradient(145deg, #12241d 0%, #0e1713 55%, #101b16 100%);
+}
+
+.brand { width: fit-content; color: white; text-decoration: none; }
+.brand :global(.logo-word) { color: white; }
+.brandCopy { max-width: 420px; margin: 52px 0 40px; }
+.eyebrow { color: #68746e; font-size: 10px; font-weight: 700; letter-spacing: .16em; }
+.brandPanel .eyebrow { color: #a3c6b1; }
+.brandCopy h1 { margin: 20px 0 16px; font: 400 clamp(42px, 5vw, 62px)/.99 var(--font-instrument), Georgia, serif; letter-spacing: -.045em; }
+.brandCopy h1 em { color: #78d5a6; font-style: normal; }
+.brandCopy > p { max-width: 345px; margin: 0; color: #c2cbc5; font-size: 13px; line-height: 1.8; }
+.benefits { display: grid; gap: 15px; margin: 33px 0 0; padding: 0; list-style: none; color: #e0e7e2; font-size: 12px; }
+.benefits li { display: flex; align-items: center; gap: 10px; }
+.benefits svg { flex: none; color: #76d4a2; }
+.brandFooter { display: flex; align-items: center; gap: 12px; color: #b1c0b6; font-size: 9px; font-weight: 700; letter-spacing: .13em; }
+.brandFooter i { width: 4px; height: 4px; border-radius: 50%; background: #72d19e; }
+
+.formPanel { display: flex; flex-direction: column; justify-content: space-between; padding: 30px clamp(26px, 4vw, 56px); }
+.switchLink { align-self: flex-end; color: #777e79; font-size: 11px; }
+.switchLink a { margin-left: 5px; color: #147a53; font-weight: 650; text-decoration: none; }
+.switchLink a:hover, .formFooter a:hover { text-decoration: underline; }
+.formContent { width: min(390px, 100%); margin: 55px auto; }
+.formContent h2 { margin: 13px 0 10px; color: #1b211e; font: 400 clamp(34px, 4vw, 43px)/1.05 var(--font-instrument), Georgia, serif; letter-spacing: -.03em; }
+.description { max-width: 340px; margin: 0 0 29px; color: #737a75; font-size: 12px; line-height: 1.7; }
+.googleButton { width: 100%; min-height: 54px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 17px; border: 1px solid #dcdedb; border-radius: 11px; background: #fff; color: #242a26; font-size: 12px; font-weight: 650; transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease; }
+.googleButton > span { flex: 1; }
+.googleButton > svg:last-child { color: #7b847e; }
+.googleButton:hover { transform: translateY(-1px); border-color: #b6c8bc; box-shadow: 0 7px 18px rgba(23, 31, 27, .07); }
+.googleButton:focus-visible { outline: 3px solid rgba(15, 138, 95, .25); outline-offset: 2px; }
+.googleMark { width: 21px; height: 21px; flex: none; }
+.divider { height: 1px; display: flex; align-items: center; justify-content: center; margin: 31px 0 22px; background: #eceeea; }
+.divider span { padding: 0 12px; background: #fff; color: #949b96; font-size: 8px; font-weight: 700; letter-spacing: .15em; }
+.securityNote { display: flex; align-items: flex-start; gap: 9px; color: #7e8680; font-size: 10px; line-height: 1.6; }
+.securityNote svg { flex: none; margin-top: 1px; color: #438966; }
+.formFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #979d98; font-size: 9px; }
+.formFooter a { color: #606963; text-decoration: none; }
+
+@media (max-width: 760px) {
+  .page { padding: 12px; }
+  .layout { min-height: calc(100vh - 24px); grid-template-columns: 1fr; border-radius: 18px; }
+  .brandPanel { min-height: 285px; padding: 24px; }
+  .brandCopy { margin: 27px 0 24px; }
+  .brandCopy h1 { max-width: 420px; margin: 12px 0 8px; font-size: 42px; }
+  .brandCopy > p { max-width: 450px; font-size: 11px; }
+  .benefits { display: none; }
+  .brandFooter { font-size: 8px; }
+  .formPanel { min-height: 390px; padding: 22px 24px; }
+  .formContent { margin: 46px auto; }
+}
+
+@media (max-width: 380px) {
+  .brandFooter { gap: 7px; letter-spacing: .08em; }
+  .brandCopy h1 { font-size: 36px; }
+  .formPanel { padding: 18px; }
+  .formContent h2 { font-size: 36px; }
+}

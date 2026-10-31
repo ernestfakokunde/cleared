@@ -1,9 +1,14 @@
 /** @type {import('next').NextConfig} */
 import dotenv from "dotenv";
 import path from "node:path";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 
-// Keep one root .env shared by the frontend and Express backend.
-dotenv.config({ path: path.resolve(process.cwd(), "../.env") });
+// Prefer the documented root .env, while supporting existing backend/.env setups.
+const frontendRoot = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(frontendRoot, "..");
+const rootEnv = path.resolve(repoRoot, ".env");
+dotenv.config({ path: existsSync(rootEnv) ? rootEnv : path.resolve(repoRoot, "backend/.env") });
 
 const nextConfig = {
   // Keep production builds from replacing assets used by a running dev server.

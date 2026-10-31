@@ -3,7 +3,7 @@ import { callAiModel, parseAiJson } from "./ai.js";
 export const DealExtractionSchema = z.object({
     title: z.string().default(""), clientName: z.string().default(""), contactName: z.string().default(""),
     contactEmail: z.string().default(""), amountCents: z.number().int().nonnegative().nullable(), currency: z.string().length(3).default("USD"),
-    termsDays: z.number().int().positive().nullable(), usageRightsText: z.string().default(""), usageRightsExpiresOn: z.string().nullable(),
+    termsDays: z.number().int().nonnegative().nullable(), usageRightsText: z.string().default(""), usageRightsExpiresOn: z.string().nullable(),
     deliverables: z.array(z.object({ title: z.string(), dueOn: z.string().nullable() })).default([]), unsureFields: z.array(z.string()).default([]),
 });
 export function formatMoney(cents, currency, locale = "en-US") {

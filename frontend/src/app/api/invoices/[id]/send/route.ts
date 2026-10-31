@@ -8,8 +8,10 @@ import { reminderSchedule } from "../../../../../../../backend/src/domain";
 export const runtime = "nodejs";
 
 export async function POST(_request: Request, context: { params: { id: string } }) {
-  const session = await auth(); if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const invoice = await prisma.invoice.findFirst({ where: { id: context.params.id, userId: session.user.id, deletedAt: null }, include: { client: true, items: true, user: { include: { profile: true } } } });
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = session.user.id;
+  const invoice = await prisma.invoice.findFirst({ where: { id: context.params.id, userId, deletedAt: null }, include: { client: true, items: true, user: { include: { profile: true } } } });
   if (!invoice) return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
   if (!invoice.client?.contactEmail) return NextResponse.json({ error: "Add an invoicing contact email before sending." }, { status: 400 });
   if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) return NextResponse.json({ error: "Email is not configured. Add RESEND_API_KEY and EMAIL_FROM." }, { status: 503 });
@@ -24,8 +26,8 @@ export async function POST(_request: Request, context: { params: { id: string } 
   const now = new Date();
   await prisma.$transaction([
     prisma.invoice.update({ where: { id: invoice.id }, data: { status: "Sent", sentAt: now } }),
-    prisma.reminder.createMany({ data: scheduled.filter(item => item.scheduledFor >= now).map(item => ({ userId: session.user!.id!, invoiceId: invoice.id, kind: item.kind, scheduledFor: item.scheduledFor })) }),
-    prisma.activity.create({ data: { userId: session.user.id, invoiceId: invoice.id, dealId: invoice.dealId, type: "invoice_sent", message: `Invoice ${invoice.number} sent to ${invoice.client.contactEmail}` } }),
+    prisma.reminder.createMany({ data: scheduled.filter(item => item.scheduledFor >= now).map(item => ({ userId, invoiceId: invoice.id, kind: item.kind, scheduledFor: item.scheduledFor })) }),
+    prisma.activity.create({ data: { userId, invoiceId: invoice.id, dealId: invoice.dealId, type: "invoice_sent", message: `Invoice ${invoice.number} sent to ${invoice.client.contactEmail}` } }),
   ]);
   return NextResponse.json({ sent: true, invoice: invoice.number });
 }

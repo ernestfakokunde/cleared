@@ -10,7 +10,7 @@ import "./today.css";
 type Priority = { id: string; kind: string; title: string; dealTitle: string; dueOn: string | null; amountCents: number; currency: string; reason?: string };
 type DealOption = { id: string; title: string };
 type QuickTask = { id: string; title: string; dueOn: string | null; dealId: string | null; dealTitle: string | null };
-type TodayData = { priorities: Priority[]; deals: DealOption[]; tasks: QuickTask[]; demo?: boolean };
+type TodayData = { priorities: Priority[]; deals: DealOption[]; tasks: QuickTask[] };
 const fallbackCopy: Record<string, string> = { task: "Task", deliverable: "Deliverable", draft_invoice: "Invoice to send", overdue_invoice: "Payment follow-up", pitch: "Pitch follow-up" };
 const money = (cents: number, currency: string) => new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 0 }).format(cents / 100);
 const dateLabel = (date: string | null) => date ? new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "No due date";
@@ -32,15 +32,6 @@ export default function TodayPage() {
     try {
       const response = await fetch("/api/today", { cache: "no-store" });
       const result = await response.json();
-      if (!response.ok && process.env.NODE_ENV === "development" && response.status === 401) {
-        const demoDate = (offset: number) => { const date = new Date(); date.setDate(date.getDate() + offset); return date.toISOString(); };
-        const sample: TodayData = { demo: true, deals: [{ id: "demo-glow", title: "Glow Skincare" }, { id: "demo-northwind", title: "Northwind Studio" }], tasks: [], priorities: [
-          { id: "demo-invoice", kind: "overdue_invoice", title: "Follow up on invoice CL-1042", dealTitle: "Glow Skincare · 3 Reels + story set", dueOn: demoDate(-6), amountCents: 240000, currency: "USD" },
-          { id: "demo-deliverable", kind: "deliverable", title: "Send the first cut for review", dealTitle: "Glow Skincare · 3 Reels + story set", dueOn: demoDate(1), amountCents: 240000, currency: "USD" },
-          { id: "demo-pitch", kind: "pitch", title: "Follow up on the website proposal", dealTitle: "Northwind Studio", dueOn: demoDate(-4), amountCents: 380000, currency: "USD" },
-        ] };
-        setData(sample); setItems(sample.priorities); setError(""); setOrderMessage("Local preview data · connect a database and sign in to save changes."); return;
-      }
       if (!response.ok) throw new Error(result.error ?? "Could not load today's work.");
       setData(result); setItems(result.priorities);
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not load today's work."); }
@@ -55,12 +46,6 @@ export default function TodayPage() {
     event.preventDefault(); if (!taskTitle.trim()) return;
     setSaving(true); setOrderMessage("");
     try {
-      if (data?.demo) {
-        const task: QuickTask = { id: `local-${Date.now()}`, title: taskTitle.trim(), dueOn: null, dealId: dealId || null, dealTitle: data.deals.find(deal => deal.id === dealId)?.title ?? null };
-        const nextData = { ...data, tasks: [task, ...data.tasks] }; setData(nextData);
-        const priority: Priority = { id: `task:${task.id}`, kind: "task", title: task.title, dealTitle: task.dealTitle ?? "Personal task", dueOn: null, amountCents: 0, currency: "USD" };
-        setItems(current => [priority, ...current]); setTaskTitle(""); setDealId(""); return;
-      }
       const response = await fetch("/api/today", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title: taskTitle, dealId: dealId || null }) });
       const result = await response.json(); if (!response.ok) throw new Error(result.error ?? "Could not add task.");
       setTaskTitle(""); setDealId(""); await load();
@@ -72,11 +57,6 @@ export default function TodayPage() {
     if (!items.length) return;
     setOrdering(true); setOrderMessage("");
     try {
-      if (data?.demo) {
-        const rank: Record<string, number> = { overdue_invoice: 0, deliverable: 1, draft_invoice: 2, task: 3, pitch: 4 };
-        setItems(current => [...current].sort((a, b) => (rank[a.kind] ?? 5) - (rank[b.kind] ?? 5)).map(item => ({ ...item, reason: item.kind === "overdue_invoice" ? "This payment is six days overdue." : item.kind === "deliverable" ? "This deliverable is due tomorrow." : "This pitch has been waiting for a reply." })));
-        setOrderedByAi(true); setOrderMessage("Preview ordering · add LLM credentials to enable AI priorities."); return;
-      }
       const response = await fetch("/api/today/order", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ items }) });
       const result = await response.json(); if (!response.ok) throw new Error(result.error ?? "Could not order your day.");
       setItems(result.items); setOrderedByAi(result.aiOrdered);
@@ -86,7 +66,6 @@ export default function TodayPage() {
   }
 
   async function completeTask(id: string) {
-    if (data?.demo) { setData(current => current ? { ...current, tasks: current.tasks.filter(task => task.id !== id) } : current); setItems(current => current.filter(item => item.id !== `task:${id}`)); return; }
     const response = await fetch(`/api/today/tasks/${id}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ completed: true }) });
     if (response.ok) await load(); else setOrderMessage("Could not update that task.");
   }

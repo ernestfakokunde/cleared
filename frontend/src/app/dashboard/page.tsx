@@ -1,20 +1,5 @@
-import Link from "next/link";
-import { ArrowUpRight, CalendarDays, ChevronRight, Plus } from "lucide-react";
-import { AppShell } from "../app-shell";
-import { Badge, Button, Card } from "@/components/ui";
-
-const recent = [
-  { title: "Spring campaign", client: "Northstar Studio", amount: "$1,200.00", stage: "In progress", tone: "accent" },
-  { title: "Product photography", client: "Kindred Goods", amount: "$850.00", stage: "Delivered", tone: "warn" },
-  { title: "Launch partnership", client: "Sunday Supply", amount: "$2,400.00", stage: "Invoiced", tone: "outline" },
-];
-const bars = [28, 45, 35, 62, 48, 82];
+import { redirect } from "next/navigation";
 
 export default function DashboardPage() {
-  return <AppShell><div className="page-heading"><div><div className="eyebrow">Tuesday, October 28</div><h1 className="page-title">Good to see you, Jordan.</h1><p className="subtle">Here is where things stand with your work.</p></div><Link className="button" href="/deals/new"><Plus size={17} /> Add a deal</Link></div>
-    <div className="stat-grid"><Card className="stat-card"><span className="stat-label">Owed to you</span><strong className="stat-value">$4,140</strong><span className="stat-foot">Across 3 unpaid invoices</span></Card><Card className="stat-card"><span className="stat-label">Overdue</span><strong className="stat-value danger-text">$2,490</strong><span className="stat-foot"><Badge tone="danger">2 invoices</Badge></span></Card><Card className="stat-card"><span className="stat-label">Paid this month</span><strong className="stat-value">$1,200</strong><span className="stat-foot">October 2026</span></Card><Card className="stat-card"><span className="stat-label">Paid last 90 days</span><strong className="stat-value">$5,680</strong><span className="stat-foot">Across 4 payments</span></Card></div>
-    <div className="dashboard-grid"><Card className="attention-card"><div className="section-title-row"><div><h2 className="panel-title">Needs attention</h2><p className="subtle">A couple of things could use a follow-up.</p></div><Link href="/invoices" className="text-link">View all <ChevronRight size={15} /></Link></div><div className="attention-item"><span className="attention-icon danger-bg"><CalendarDays size={17} /></span><div className="attention-copy"><strong>Invoice CL-1003 is overdue</strong><span>Sunday Supply · 18 days past due · $2,400</span></div><Link href="/invoices" className="small-action">Send reminder</Link></div><div className="attention-item"><span className="attention-icon warn-bg"><CalendarDays size={17} /></span><div className="attention-copy"><strong>Final assets are due soon</strong><span>Spring campaign · Due in 4 days</span></div><Link href="/deals" className="small-action">Open deal</Link></div><div className="attention-item"><span className="attention-icon danger-bg"><CalendarDays size={17} /></span><div className="attention-copy"><strong>Invoice CL-1002 is overdue</strong><span>Kindred Goods · 7 days past due · $850</span></div><Link href="/invoices" className="small-action">Send reminder</Link></div></Card>
-      <Card className="income-card"><div className="section-title-row"><div><h2 className="panel-title">Paid income</h2><p className="subtle">Last 6 months · USD</p></div><button className="icon-button"><ArrowUpRight size={17} /></button></div><div className="chart-total">$8,420 <span>+12.4%</span></div><div className="chart">{bars.map((height, i) => <div className="bar-column" key={i}><div className="bar" style={{ height: `${height}%` }} /><span>{["May", "Jun", "Jul", "Aug", "Sep", "Oct"][i]}</span></div>)}</div></Card></div>
-    <Card className="recent-card"><div className="section-title-row"><div><h2 className="panel-title">Recent deals</h2><p className="subtle">Your latest work, all in one place.</p></div><Link href="/deals" className="text-link">All deals <ChevronRight size={15} /></Link></div><div className="table-scroll"><table><thead><tr><th>Deal</th><th>Stage</th><th>Amount</th><th></th></tr></thead><tbody>{recent.map(row => <tr key={row.title}><td><strong>{row.title}</strong><small>{row.client}</small></td><td><Badge tone={row.tone}>{row.stage}</Badge></td><td className="amount-cell">{row.amount}</td><td><ChevronRight size={16} className="muted" /></td></tr>)}</tbody></table></div></Card>
-  </AppShell>;
+  redirect("/today");
 }

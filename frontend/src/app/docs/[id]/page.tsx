@@ -1,29 +1,85 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import LinkExtension from "@tiptap/extension-link";
-import Mention from "@tiptap/extension-mention";
-import TaskList from "@tiptap/extension-task-list";
-import TaskItem from "@tiptap/extension-task-item";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import { AppShell } from "../../app-shell";
 import { Card } from "@/components/ui";
-type MentionItem = { id: string; label: string; type: string };
-function markdownBlocks(text: string) { const content: any[] = []; let bullets: any[] = []; let tasks: any[] = []; const flush = () => { if (bullets.length) content.push({ type: "bulletList", content: bullets.splice(0) }); if (tasks.length) content.push({ type: "taskList", content: tasks.splice(0) }); }; for (const line of text.split("\n")) { if (/^- \[[ x]\] /i.test(line)) { if (bullets.length) content.push({ type: "bulletList", content: bullets.splice(0) }); tasks.push({ type: "taskItem", attrs: { checked: /^- \[x\]/i.test(line) }, content: [{ type: "paragraph", ...(line.slice(6) ? { content: [{ type: "text", text: line.slice(6) }] } : {}) }] }); } else if (/^- /.test(line)) { if (tasks.length) content.push({ type: "taskList", content: tasks.splice(0) }); bullets.push({ type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: line.slice(2) }] }] }); } else { flush(); const heading = /^(#{1,3}) (.+)$/.exec(line); if (heading) content.push({ type: "heading", attrs: { level: heading[1].length }, content: [{ type: "text", text: heading[2] }] }); else content.push({ type: "paragraph", ...(line ? { content: [{ type: "text", text: line }] } : {}) }); } } flush(); return content; }
-export default function DocEditorPage() {
-  const params = useParams<{ id: string }>(); const [title, setTitle] = useState("Untitled"); const [doc, setDoc] = useState<any>(null); const [status, setStatus] = useState("Loading…"); const [mentions, setMentions] = useState<MentionItem[]>([]); const [mentionId, setMentionId] = useState(""); const [aiOpen, setAiOpen] = useState(false); const [aiAction, setAiAction] = useState("brief"); const [aiText, setAiText] = useState(""); const [aiBusy, setAiBusy] = useState(false); const [aiError, setAiError] = useState("");
-  const extensions = useMemo(() => [StarterKit, LinkExtension.configure({ openOnClick: false, HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" } }), TaskList, TaskItem.configure({ nested: true }), Mention.configure({ HTMLAttributes: { class: "doc-mention" } })], []);
-  const editor = useEditor({ extensions, content: { type: "doc", content: [{ type: "paragraph" }] }, immediatelyRender: false, editorProps: { attributes: { class: "tiptap-editor", spellcheck: "true" } }, onUpdate: () => setStatus("Unsaved changes") });
-  useEffect(() => { fetch(`/api/docs/${params.id}`).then(r => r.json()).then(d => { if (d.error) { setStatus(d.error); return; } setDoc(d); setTitle(d.title); editor?.commands.setContent(d.content); setStatus(`Edited ${new Date(d.updatedAt).toLocaleString()}`); }).catch(() => setStatus("Couldn't load doc.")); }, [params.id, editor]);
-  const save = useCallback(async () => { if (!editor || !doc) return; setStatus("Saving…"); try { const r = await fetch(`/api/docs/${params.id}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ title: title || "Untitled", content: editor.getJSON(), dealId: doc.dealId, clientId: doc.clientId }) }); const d = await r.json(); setStatus(r.ok ? `Saved ${new Date().toLocaleTimeString()}` : d.error); } catch { setStatus("Couldn't save. Check your connection."); } }, [doc, editor, params.id, title]);
-  useEffect(() => { if (!doc) return; const timer = setTimeout(save, 900); return () => clearTimeout(timer); }, [title, save, doc, editor?.state]);
-  useEffect(() => { fetch("/api/docs/mentions").then(r => r.json()).then(d => setMentions(d.mentions ?? [])); }, []);
-  function insertMention() { const item = mentions.find(m => m.id === mentionId); if (!item || !editor) return; editor.chain().focus().insertContent({ type: "mention", attrs: { id: item.id, label: item.label, entityType: item.type } }).insertContent(" ").run(); setMentionId(""); }
-  async function draft() { setAiBusy(true); setAiError(""); const r = await fetch("/api/ai/doc-draft", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: aiAction, notes: aiText, dealId: doc?.dealId ?? undefined }) }); const d = await r.json(); setAiBusy(false); if (!r.ok) { setAiError(d.error); return; } editor?.chain().focus().insertContent(markdownBlocks(d.text)).run(); setAiOpen(false); setStatus("AI draft inserted — review and edit before saving"); }
-  return <AppShell><div className="doc-editor-head"><div><Link href="/docs" className="text-link">← All docs</Link><input aria-label="Document title" className="doc-title-input" value={title} onChange={e => setTitle(e.target.value)} /><div className="doc-save-status">{status}</div></div><button className="button secondary" onClick={() => setAiOpen(v => !v)}> /ai Draft</button></div>
-    {aiOpen && <Card className="doc-ai-panel"><div className="section-title-row"><strong className="panel-title">Draft with AI</strong><button className="button ghost" onClick={() => setAiOpen(false)}>Close</button></div><p className="subtle">The draft will be inserted for you to review and edit.</p><select className="select" value={aiAction} onChange={e => setAiAction(e.target.value)}><option value="brief">Content brief from notes</option><option value="checklist">Checklist from contract text</option></select><textarea className="input textarea" placeholder="Paste notes or contract text…" value={aiText} onChange={e => setAiText(e.target.value)} /><button className="button" disabled={aiBusy || aiText.length < 10} onClick={draft}>{aiBusy ? "Drafting…" : "Insert draft"}</button>{aiError && <p className="danger-text">{aiError}</p>}</Card>}
-    <Card className="doc-writing-card"><div className="doc-toolbar"><button onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}>Heading</button><button onClick={() => editor?.chain().focus().toggleBulletList().run()}>Bullets</button><button onClick={() => editor?.chain().focus().toggleTaskList().run()}>Checklist</button><button onClick={() => { const url = window.prompt("Link URL"); if (url) editor?.chain().focus().setLink({ href: url }).run(); }}>Link</button><select aria-label="Mention a deal or client" className="select" value={mentionId} onChange={e => { setMentionId(e.target.value); }}><option value="">@ Mention…</option>{mentions.map(m => <option key={`${m.type}-${m.id}`} value={m.id}>{m.type}: {m.label}</option>)}</select><button onClick={insertMention} disabled={!mentionId}>Insert mention</button></div><EditorContent editor={editor} /></Card>
+
+type CardKind = "Project idea" | "To-do" | "Reference";
+type DocData = { id: string; title: string; template: string | null; content: unknown; dealId?: string | null; clientId?: string | null };
+const kinds: CardKind[] = ["Project idea", "To-do", "Reference"];
+
+function flatten(value: unknown): string {
+  if (!value || typeof value !== "object") return "";
+  const node = value as { type?: string; text?: string; content?: unknown[] };
+  if (node.text) return node.text;
+  const children = (node.content ?? []).map(flatten).filter(Boolean);
+  return children.join(["paragraph", "heading", "listItem", "taskItem"].includes(node.type ?? "") ? "\n" : " ");
+}
+
+export default function ProjectCardPage() {
+  const params = useParams<{ id: string }>();
+  const router = useRouter();
+  const [doc, setDoc] = useState<DocData | null>(null);
+  const [title, setTitle] = useState("");
+  const [kind, setKind] = useState<CardKind>("Project idea");
+  const [notes, setNotes] = useState("");
+  const [status, setStatus] = useState("Loading card…");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/docs/${params.id}`, { cache: "no-store" })
+      .then(async response => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error ?? "Could not load this card.");
+        return data;
+      })
+      .then((data: DocData) => {
+        setDoc(data);
+        setTitle(data.title);
+        setKind(kinds.includes(data.template as CardKind) ? data.template as CardKind : "Reference");
+        setNotes(flatten(data.content));
+        setStatus("Your notes are saved when you choose Save changes.");
+      })
+      .catch(error => setStatus(error instanceof Error ? error.message : "Could not load this card."));
+  }, [params.id]);
+
+  async function save() {
+    setBusy(true);
+    setStatus("");
+    try {
+      const response = await fetch(`/api/docs/${params.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ title: title.trim() || "Untitled", template: kind, dealId: doc?.dealId ?? null, clientId: doc?.clientId ?? null, content: { type: "doc", content: [{ type: "paragraph", ...(notes.trim() ? { content: [{ type: "text", text: notes.trim() }] } : {}) }] } }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Could not save this card.");
+      setStatus("Saved.");
+    } catch (error) { setStatus(error instanceof Error ? error.message : "Could not save this card."); }
+    finally { setBusy(false); }
+  }
+
+  async function remove() {
+    if (!window.confirm("Delete this card? This cannot be undone.")) return;
+    setBusy(true);
+    try {
+      const response = await fetch(`/api/docs/${params.id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Could not delete this card.");
+      router.push("/docs");
+    } catch (error) { setStatus(error instanceof Error ? error.message : "Could not delete this card."); }
+    finally { setBusy(false); }
+  }
+
+  return <AppShell>
+    <div className="doc-editor-head"><div><Link href="/docs" className="text-link"><ArrowLeft size={14} /> All project cards</Link><div className="eyebrow project-detail-eyebrow">{kind}</div><h1 className="page-title">{title || "Untitled card"}</h1><div className="doc-save-status">{status}</div></div></div>
+    <Card className="project-detail-card">
+      <label className="field-label">Title<input className="input" maxLength={180} value={title} onChange={event => setTitle(event.target.value)} placeholder="Give this card a clear title" /></label>
+      <label className="field-label">Type<select className="input" value={kind} onChange={event => setKind(event.target.value as CardKind)}>{kinds.map(item => <option key={item}>{item}</option>)}</select></label>
+      <label className="field-label">Notes<textarea className="input project-notes" maxLength={12000} value={notes} onChange={event => setNotes(event.target.value)} placeholder="Write down the idea, next steps, or details you want to remember." /></label>
+      <div className="form-actions project-detail-actions"><button className="button ghost" type="button" disabled={busy} onClick={remove}><Trash2 size={15} /> Delete card</button><button className="button" type="button" disabled={busy || !title.trim()} onClick={save}>{busy ? "Saving…" : "Save changes"}</button></div>
+    </Card>
   </AppShell>;
 }

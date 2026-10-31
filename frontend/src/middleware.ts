@@ -1,6 +1,10 @@
 import NextAuth from "next-auth";
 import authConfig from "./auth.config";
 
-// Temporary local review mode: application pages are browsable without a session.
-// API routes continue to enforce authentication in their handlers.
-export const { auth: middleware } = NextAuth({ ...authConfig, callbacks: { ...authConfig.callbacks, authorized: () => true } });
+const { auth } = NextAuth(authConfig);
+
+export default auth;
+
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|favicon.svg|apple-touch-icon.svg).*)"],
+};

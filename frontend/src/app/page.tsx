@@ -48,7 +48,7 @@ export default function Home() {
         </div>
         <div className="landing-nav-actions">
           <Link href="/signin">Sign in</Link>
-          <Link href="/signup" className="landing-nav-cta">Start free <ArrowRight size={15} /></Link>
+          <Link href="/today" className="landing-nav-cta">Open app <ArrowRight size={15} /></Link>
         </div>
       </nav>
 
@@ -57,10 +57,10 @@ export default function Home() {
         <h1 className="persona-headline persona-copy" key={`headline-${persona}`}><span>{current.headline[0]}</span><br /><span className="hero-highlight"><i />{current.headline[1]}</span></h1>
         <p className="landing-subtitle persona-copy" key={`subhead-${persona}`}>{current.subhead}</p>
         <div className="landing-actions">
-          <Link href="/signup" className="landing-primary">Start free <ArrowRight size={17} /></Link>
+          <Link href="/today" className="landing-primary">Open Cleared <ArrowRight size={17} /></Link>
           <Link href="#how-it-works" className="landing-secondary">See how it works</Link>
         </div>
-        <p className="landing-footnote">Free to start. No card required.</p>
+        <p className="landing-footnote">No sign-in required to get started.</p>
 
         <div className="landing-preview-wrap" aria-label="Cleared product preview">
           <div className="preview-window">
